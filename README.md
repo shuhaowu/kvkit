@@ -10,6 +10,8 @@ one became slow and buggy, as well as obsolete.
 kvkit is designed with portability in mind. Backends could be easily
 written. The current available backends include: Riak, LevelDB.
 
+![Travis Build Status](https://travis-ci.org/shuhaowu/kvkit.png)
+
 Installation
 ------------
 
