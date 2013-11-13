@@ -48,6 +48,9 @@ class EmDocumentMetaclass(type):
         indexes += list(p_cls._indexes)
 
     for name in attrs.keys():
+      if name == "_backend":
+        continue
+
       if isinstance(attrs[name], BaseProperty):
         meta[name] = attrs.pop(name)
         if isinstance(meta[name], (StringProperty, NumberProperty, ListProperty, ReferenceProperty)) and meta[name]._index:
