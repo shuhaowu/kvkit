@@ -8,5 +8,5 @@ before_install:
   - "yes n | sudo apt-get install riak"
   - "sudo service riak start"
 install:
-  - pip install requirements.txt --use-mirrors
+  - pip install -r requirements.txt --use-mirrors
 script: nosetests

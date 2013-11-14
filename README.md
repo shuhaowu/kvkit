@@ -2,16 +2,21 @@ kvkit
 =====
 
 **kvkit** is an object mapper and a RAD tool for key value stores.
-This project is a continuation from the project [riakkit][rk] as that
-one became slow and buggy, as well as obsolete.
+This project serves as a replacement for [riakkit][rk] and [leveldbkit][lk].
 
 [rk]: https://github.com/shuhaowu/riakkit
+[lk]: https://github.com/shuhaowu/leveldbkit
 
-kvkit is designed with portability in mind. Backends could be easily
-written. The current available backends include: Riak, LevelDB.
+If you have used riakkit in the past, you may have noticed missing features.
+This is intentional and those features will not come back due to their
+performance/code quality implications.
 
-![Travis Build Status](https://travis-ci.org/shuhaowu/kvkit.png)
+kvkit uses a modular design that makes it easily portable to other storage
+backends. Backends can be found in `backends/`. A starting point is by copying
+base.py (either the module functions or the class). `slow_memory` is a good
+example implementation of the database in memory that is used in tests.
 
-Installation
-------------
+[![Travis Build
+Status](https://travis-ci.org/shuhaowu/kvkit.png)](https://travis-ci.org/shuhaowu/kvkit.png)
 
+Documentations available at http://kvkit.readthedocs.org/.
