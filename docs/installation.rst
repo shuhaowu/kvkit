@@ -1,1 +1,6 @@
 .. _installation-chapter:
+
+============
+Installation
+============
+

@@ -4,6 +4,14 @@
 API Documentations
 ==================
 
+Note that even though everything here says kvkit.xxxxx.xxxx, you can
+access all of the documented stuff here from just kvkit.xxx
+
+like::
+
+    from kvkit import Document
+
+
 Document
 --------
 

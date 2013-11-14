@@ -183,7 +183,7 @@ class PasswordProperty(BaseProperty):
       True or false depending of the password is the right one or not.
 
     Note:
-      Typically you would just do
+      Typically you would just do::
 
           PasswordProperty.check_password(req.forms["password"],
                                           user.password)
