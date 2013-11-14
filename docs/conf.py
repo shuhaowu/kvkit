@@ -13,6 +13,8 @@
 
 import sys, os
 
+sys.path.append("..")
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -32,6 +34,8 @@ templates_path = ['_templates']
 
 # The suffix of source filenames.
 source_suffix = '.rst'
+
+autoclass_content = 'both'
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'

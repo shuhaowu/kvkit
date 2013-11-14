@@ -14,6 +14,14 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Riakkit or Leveldbkit. If not, see <http://www.gnu.org/licenses/>.
 
+"""
+.. module:: kvkit.document
+    :synopsis: Document class. The class that allows storing of data
+               that you should extend from.
+
+.. moduleauthor:: Shuhao Wu <shuhao@shuhaowu.com>
+"""
+
 from __future__ import absolute_import
 
 try:
@@ -45,12 +53,35 @@ class Document(EmDocument):
 
   @classmethod
   def get(cls, key, **args):
+    """Gets an object from the db given a key.
+
+    Args:
+      key: The key
+
+    Returns:
+      The document.
+
+    Raises:
+      NotFoundError if not found.
+    """
     doc = cls(key=key)
     doc.reload(**args)
     return doc
 
   @classmethod
   def get_or_new(cls, key, **args):
+    """Gets an object from the db given a key. If fails, create one.
+
+    Note that this method does not save the object, nor does it populate
+    it.
+
+    Args:
+      key: The key
+
+    Returns:
+      The document. If it is not available from the db, a new one will
+      be created.
+    """
     try:
       return cls.get(key, **args)
     except NotFoundError:
@@ -58,6 +89,23 @@ class Document(EmDocument):
 
   @classmethod
   def index_keys_only(cls, field, start_value, end_value=None, **args):
+    """Uses the index to find document keys.
+
+    Args:
+      field: the property/field name.
+
+      start_value: The value that you're indexing for. If an end_value
+          is not provided, it has to be an exact match
+          (field == start_value).
+
+      end_value: the end value for a range query. If left to be None,
+          it will match exact with start_value. Otherwise the range is
+          start_value <= value <= end_value
+
+    Returns:
+      A list/iterator of keys that matches the query in arbitrary order
+      that depends on the backend.
+    """
     if field == "$bucket":
       return cls.list_all_keys()
     elif field == "$key":
@@ -72,18 +120,68 @@ class Document(EmDocument):
 
   @classmethod
   def delete_key(cls, key, **args):
+    """Deletes a document with a key from the database.
+
+    Args:
+      key: The key to be deleted.
+
+    Note:
+      This is usually more efficient than YourDocument(key).delete() as
+      that involves a get operation.
+    """
     return cls._backend.delete(cls.__class__, key, **args)
 
   @classmethod
   def list_all_keys(cls, start_value=None, end_value=None, **args):
+    """List all the keys from the db.
+
+    Args:
+      start_value: if specified, it will be the start of a range.
+      end_value: if specified, it will be the end of a range.
+
+    Returns:
+      allkeys[start_value:] if only start_value is given,
+      allkeys[start_value:end_value+1] if end_value is given. The +1 is
+      largely a metaphor, as it will return all the values that ==
+      end_value.
+    """
     return cls._backend.list_all_keys(cls, start_value=start_value, end_value=end_value, **args)
 
   @classmethod
   def list_all(cls, start_value=None, end_value=None, **args):
+    """List all the objects.
+
+    Args:
+      start_value: if specified, it will be the start of a range.
+      end_value: if specified, it will be the end of a range.
+
+    Returns:
+      allobjs[start_value:] if only start_value is given,
+      allobjs[start_value:end_value+1] if end_value is given. The +1 is
+      largely a metaphor, as it will return all the values that ==
+      end_value.
+    """
     return cls._backend.list_all(cls, start_value, end_value, **args)
 
   @classmethod
   def index(cls, field, start_value, end_value=None, **args):
+    """Uses the index to find documents that matches.
+
+    Args:
+      field: the property/field name.
+
+      start_value: The value that you're indexing for. If an end_value
+          is not provided, it has to be an exact match
+          (field == start_value).
+
+      end_value: the end value for a range query. If left to be None,
+          it will match exact with start_value. Otherwise the range is
+          start_value <= value <= end_value
+
+    Returns:
+      An iterator of loaded documents. Loaded at each iteration to save
+      time and space.
+    """
     kvs = []
     if field == "$bucket":
       kvs = cls.list_all()
@@ -101,6 +199,17 @@ class Document(EmDocument):
       yield cls(key=key, data=json.loads(value))
 
   def __init__(self, key=lambda: uuid1().hex, data={}, **args):
+    """Initializes a new document.
+
+    Args:
+      key: A key for the object. Or a function that returns a key.
+          By default it generates an uuid1 hex.
+
+      data: The data to be merged in.
+
+      **args: gets passed into EmDocument's __init__
+
+    """
     if callable(key):
       key = key()
 
@@ -118,17 +227,47 @@ class Document(EmDocument):
     return self
 
   def reload(self, **args):
+    """Reloads an object from the database.
+
+    It will update inplace. Keyword arguments are passed to the backend.
+
+    Returns:
+      self
+
+    Raises:
+      NotFoundError
+    """
     value = self._backend.get(self.__class__, self.key, **args)
     value = json.loads(value)
     self.deserialize(value)
     return self
 
   def save(self, **args):
+    """Saves an object into the db.
+
+    Keyword arguments are passed to the backend.
+
+    Returns:
+      self
+
+    Raises:
+      ValidationError
+    """
     value = json.dumps(self.serialize())
     self._backend.save(self.__class__, self.key, value, **args)
     return self
 
   def delete(self, **args):
+    """Deletes this object from the db.
+
+    Will also clear this document.
+
+    Usually more efficient to use YourDocument.delete_key. However, if
+    you already have the object loaded...
+
+    Returns:
+      self
+    """
     self._backend.delete(self.__class__, self.key, **args)
     self.clear(False)
     return self

@@ -30,7 +30,18 @@ from .standard import BaseProperty, _NOUNCE
 # Probably will never use used.
 # But why not.
 class EnumProperty(BaseProperty):
+  """Stores a choice out of some possible values.
+
+  Stores in the database as 1, 2, 3 to save space. This is probably not
+  really used as most of the time a string property is sufficient.
+  """
   def __init__(self, possible_values, **args):
+    """Initializes a new EnumProperty.
+
+    Args:
+      possible_values: A list of a values that are possible in strings.
+          Only these values will be allowed to set to this after.
+    """
     BaseProperty.__init__(self, **args)
 
     self._map_forwards = {}
@@ -49,7 +60,10 @@ class EnumProperty(BaseProperty):
 
 # Hey something that may be used!
 class DateTimeProperty(BaseProperty):
+  """Stores the datetime in UTC seconds since the unix epoch.
 
+  Takes in a datetime.
+  """
   def __init__(self, **args):
     BaseProperty.__init__(self, **args)
     if self._default is _NOUNCE:
@@ -95,10 +109,18 @@ except ImportError:
   # In theory the developer will never use this.......
   _p = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
   def generate_salt():
-    """Generates a random string from a-zA-Z0-9 using os.urandom.
+    """Generates a random salt.
 
-  Could be a way to generate the keys. May collide more, not certain though.
-  """
+    If bcrypt is not installed, it uses os.urandom to select from
+    a-Z0-9 with a length of 25.
+
+    With bcrypt installed, it uses bcrypt.gensalt().
+
+    MAKE SURE YOU ARE USING BCRYPT IN PRODUCTION IF YOU USE THIS.
+
+    Returns:
+      A salt.
+    """
     n = 25 # 25 should be good?
     t = ""
     while n > 0:
@@ -111,11 +133,35 @@ except ImportError:
     return t
 
   hash_password = lambda password, salt: sha256(password + salt).hexdigest()
+  hash_password.__doc__ = """Takes a plaintext password and a salt and generates a hash.
+
+  If bcrypt is installed, it uses bcrypt.hashpw.
+
+  Without bcrypt, it uses sha256(password + salt).
+
+  MAKE SURE YOU ARE USING BCRYPT IN PRODUCTION IF YOU USE THIS.
+
+  Args:
+    password: the plain text password
+    salt: the salt.
+
+  Returns:
+    A hash.
+  """
 else:
   generate_salt = lambda: bcrypt.gensalt()
   hash_password = lambda password, salt: bcrypt.hashpw(password, salt)
 
 class PasswordProperty(BaseProperty):
+  """Password property that's secure if bcrypt is installed.
+
+  MAKE SURE YOU ARE USING BCRYPT IN PRODUCTION IF YOU USE THIS.
+
+  When the value is set (i.e. document.password = "mypassword"), a salt
+  will automatically be generated and document.password from now on will
+  {"salt": salt, "hash": hash}. This is how it will be stored into the
+  db.
+  """
   def on_set(self, value):
     if not isinstance(value, basestring):
       return TypeError("Password must be a basestring!")
@@ -127,4 +173,21 @@ class PasswordProperty(BaseProperty):
 
   @staticmethod
   def check_password(password, record):
+    """Checks if a password matches a record.
+
+    Args:
+      password: the plain text password.
+      record: The record in the db, which is in the format of {"salt": salt, "hash": hash}.
+
+    Returns:
+      True or false depending of the password is the right one or not.
+
+    Note:
+      Typically you would just do
+
+          PasswordProperty.check_password(req.forms["password"],
+                                          user.password)
+
+      or something to that effect.
+    """
     return hash_password(password, record["salt"]) == record["hash"]

@@ -18,33 +18,32 @@ from ..exceptions import NotFoundError
 _NOUNCE = object()
 
 class BaseProperty(object):
-  """Base property type
-    All property types are required to be extended from this class.
-  """
-
   def __init__(self, required=False, default=_NOUNCE,
                validators=[], load_on_demand=False,
                index=False):
-    """Initializes a new instance of a property.
+    """The base property that all other properties extends from.
 
     Args:
-      required: True or false, this will test for requiredness (None value will
-      not fly!) Defaults to False
-      default: a default value or a function that takes no argument that
-               generates a default value. Defaults to None.
-               Note: if you use this as a variable, passing an instance into
-               it maybe hurtful as there's no deepcopying going on. If you want
-               a default value of {}, do default=lambda: {}
-      validators: A list of functions that takes in a value to validate. This
-                  function must return True or False.
-                  Note: if you want to turn off validations, set this to None.
-      load_on_demand: A boolean value indicating if we want to convert the value
-                      upon getting from the database or when it is first
-                      accessed.
-      index: A boolean value indicating if this property should be indexed so
-             it can be found using index. This is only valid for
-             StringProperty, NumberProperty, ListProperty, and ReferenceProperty
-             with Document.
+      required: If True and if a value is None, save will raise a
+          ValidationError. Defaults to False.
+      default: The default value that document populates when it creates
+          a new object. It could be a function that takes no arguments
+          that returns a value to be filled as a default value. If this
+          is not given, no default value is specified, the default value
+          for that property will be None.
+      validators: A function or a list of functions that takes a value
+          and returns True or False depending on if the value is valid
+          or not. If a function returns False, save will fail with
+          ValidationError and is_valid will return False. Defaults to []
+      load_on_demand: If True, the value will not be deserialized until
+          the programmer accesses the value. Defaults to False, which
+          means value will be deserialized when the object is loaded
+          from the DB.
+      index: If True, the database backend will create an index for this
+          entry allowing it to be queried via index. This is only valid
+          for StringProperty, NumberProperty, ListProperty, and
+          ReferenceProperty. Individual backends may have more but will
+          not necessarily be portable.
     """
     self.required = required
     self._default = default
@@ -53,6 +52,26 @@ class BaseProperty(object):
     self._index = index
 
   def validate(self, value):
+    """Validates a value.
+
+    This invokes both the builtin validator as well as the custom
+    validators. The BaseProperty version only validates with custom ones
+    if available.
+
+    Args:
+      value: The value to be validated.
+
+    Returns:
+      True or False depending on if the value is valid or not.
+
+    Note:
+      If you are writing your own property class, subclass this one
+      and in the validate method, put the following first to validate
+      the custom validators::
+
+        if not BaseProperty.validate(self, value):
+          return False
+    """
     if value is None:
       return not self.required
 
@@ -66,35 +85,56 @@ class BaseProperty(object):
     return True
 
   def to_db(self, value):
-    """Converts a value to a database friendly format. Called upon saving to the
-    database.
+    """ Converts a value to a database friendly format (serialization).
+
+    This should never convert None into anything else.
+
     Args:
-      value: the value to be converted
+      value: The value to be converted
 
     Returns:
-      Whatever that type wants to convert. Default does nothing. If you're
-      implementing this it needs to be JSON friendly.
+      Whatever the property wants to do to that value. The BaseProperty
+      version does nothing and just returns the value.
+
+    Note:
+      If you want to implement this version yourself it the return value
+      of this should be JSON friendly. Do not convert None unless you
+      absolutely mean it.
     """
     return value
 
   def from_db(self, value):
-    """Converts a value from the database back into something we work with.
-    Called upon getting from the database. If self.load_on_demand is set to
-    True, this method will be called when first accessed instead of on db.
+    """ Converts the value from to_db back into its original form.
+
+    This should be the inverse function of to_db and it also shouldn't
+    convert None into anything else other than itself.
 
     Args:
       value: Value from the database
 
     Returns:
-      Whatever that type wants to be once its in application code rather than
-      db.
+      Whatever that type wants to be once its in application code rather
+      than the db form.
+
+    Note:
+      It is important if you want to implement this that it is actually
+      and inverse function of to_db. Do not convert None unless you
+      absolutely mean it.
+
+      If load_on_demand is True, this method will only be called the
+      first time when the property is accessed.
     """
     return value
 
   def default(self):
-    """Returns the default value of the property. It will return either the
-    default value given (or generate one via the function) or the default for
-    that type"""
+    """Returns the default value of the property.
+
+    It will first try to return the default you set (either function or
+    value). If not it will return None.
+
+    Returns:
+      The default value specified by you or the type. Or None.
+    """
     if callable(self._default):
       return self._default()
 
@@ -107,15 +147,23 @@ Property = BaseProperty
 # This are strict, if you want to relax, use Property instead.
 
 class StringProperty(BaseProperty):
-  """Simple string property. Values will be converted to unicode."""
+  """For storing strings.
+
+  Converts all value into unicode when serialized. Deserializes all to
+  unicode as well.
+  """
   def to_db(self, value):
     return None if value is None else unicode(value)
 
 class NumberProperty(BaseProperty):
-  """NumberProperty. Encompasses integer and floats.
-  This always converts to floating points.
-  No complex numbers here!"""
+  """For storing real numbers.
+
+  This always converts to a floating point.
+  """
+
   def validate(self, value):
+    """Checks if value is a number by taking `float(value)`.
+    """
     if not BaseProperty.validate(self, value):
       return False
 
@@ -133,12 +181,16 @@ class NumberProperty(BaseProperty):
     return None if value is None else float(value)
 
 class BooleanProperty(BaseProperty):
-  """Boolean property. Values will be converted to boolean upon save."""
+  """Boolean property. Values will be converted to boolean upon save.
+  """
   def to_db(self, value):
     return None if value is None else bool(value)
 
 class DictProperty(BaseProperty):
-  """Dictionary property. Value must be an instance of a dictionary (or subclass)."""
+  """Dictionary property. Or a JSON object when stored.
+
+  Value must be an instance of a dictionary (or subclass).
+  """
   def __init__(self, **args):
     BaseProperty.__init__(self, **args)
     if self._default is _NOUNCE:
@@ -148,7 +200,10 @@ class DictProperty(BaseProperty):
     return BaseProperty.validate(self, value) and (value is None or isinstance(value, dict))
 
 class ListProperty(BaseProperty):
-  """List property. Value must be an instance of a list/tuple (or subclass)."""
+  """List property.
+
+  Value must be an instance of a list/tuple (or subclass).
+  """
   def __init__(self, **args):
     BaseProperty.__init__(self, **args)
     if self._default is _NOUNCE:
@@ -158,8 +213,9 @@ class ListProperty(BaseProperty):
     return BaseProperty.validate(self, value) and (value is None or isinstance(value, (tuple, list)))
 
 class EmDocumentProperty(BaseProperty):
-  """Embedded document property. Value must be an embedded document or
-  a dictionary"""
+  """Embedded document property.
+
+  Value must be an EmDocument or a dictionary"""
   def __init__(self, emdocument_class, **args):
     """Initializes a new embedded document property.
 
@@ -183,7 +239,10 @@ class EmDocumentProperty(BaseProperty):
     return None if value is None else self.emdocument_class.load(value)
 
 class EmDocumentsListProperty(BaseProperty):
-  """A list of embedded documents. Probably shouldn't abuse this."""
+  """A list of embedded documents.
+
+  Probably shouldn't abuse this.
+  """
   def __init__(self, emdocument_class, **args):
     """Initializes a new embedded document property.
 
@@ -213,11 +272,23 @@ class EmDocumentsListProperty(BaseProperty):
     return [None if d is None else self.emdocument_class.load(d) for d in value] if value else None
 
 class ReferenceProperty(BaseProperty):
-  """Reference property. Stores the key of the other class in the db and
-  retrieves on demand. Probably shouldn't even use this as 2i is better in
-  most scenarios."""
+  """Reference property references another Document.
+
+  Stores the key of the other class in the db and retrieves on demand.
+  Probably shouldn't even use this as index is better in most scenarios.
+  """
 
   def __init__(self, reference_class, strict=False, **kwargs):
+    """Initializes a new ReferenceProperty
+
+    Args:
+      reference_class: The Document child class that this property is
+          referring to.
+      strict: If True and if the object is not found in the database
+          loading it, it will raise a NotFoundError. If load_on_demand
+          is False and it tries to load this property with a
+          non-existent object, it will also raise a NotFoundError.
+    """
     BaseProperty.__init__(self, **kwargs)
     if not hasattr(reference_class, "get"):
       raise ValueError("ReferenceProperty only accepts Document based classes (offender: {0}).".format(reference_class.__class__))
