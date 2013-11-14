@@ -18,6 +18,10 @@ from __future__ import absolute_import
 
 import unittest
 
+from ...backends import slow_memory
+from ...document import Document
+from ...emdocument import EmDocument
+from ...exceptions import ValidationError
 from ...properties.standard import (
   BaseProperty,
   StringProperty,
@@ -29,6 +33,12 @@ from ...properties.standard import (
   EmDocumentsListProperty,
   ReferenceProperty
 )
+
+class Embedded(EmDocument):
+  i = NumberProperty(required=True)
+
+class Doc(Document):
+  _backend = slow_memory
 
 class StandardPropertiesTest(unittest.TestCase):
   def test_default(self):

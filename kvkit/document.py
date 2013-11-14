@@ -79,18 +79,26 @@ class Document(EmDocument):
     return cls._backend.list_all_keys(cls, start_value=start_value, end_value=end_value, **args)
 
   @classmethod
+  def list_all(cls, start_value=None, end_value=None, **args):
+    return cls._backend.list_all(cls, start_value, end_value, **args)
+
+  @classmethod
   def index(cls, field, start_value, end_value=None, **args):
+    kvs = []
     if field == "$bucket":
-      return cls.list_all()
+      kvs = cls.list_all()
     elif field == "$key":
-      return cls.list_all(start_value, end_value, **args)
+      kvs = cls.list_all(start_value, end_value, **args)
+    else:
+      if isinstance(cls._meta[field], NumberProperty):
+        start_value = float(start_value)
+        if end_value is not None:
+          end_value = float(end_value)
 
-    if isinstance(cls._meta[field], NumberProperty):
-      start_value = float(start_value)
-      if end_value is not None:
-        end_value = float(end_value)
+      kvs = cls._backend.index(cls, field, start_value, end_value, **args)
 
-    return cls._backend.index(cls, field, start_value, end_value, **args)
+    for key, value in kvs:
+      yield cls(key=key, data=json.loads(value))
 
   def __init__(self, key=lambda: uuid1().hex, data={}, **args):
     if callable(key):
