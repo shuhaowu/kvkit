@@ -13,8 +13,7 @@ serve as your model layer.
 Using the API is simple. Here's a simple example with a blog::
 
     >>> from kvkit import *
-    >>> import kvkit.backends import slow_memory
-    >>> some_client = riak.RiakClient()
+    >>> from kvkit.backends import slow_memory
     >>> class BlogPost(Document):
     ...     # _backend is required
     ...     _backend = slow_memory
@@ -31,14 +30,14 @@ We can create and save a document::
     >>> post = BlogPost(data={"title": "hi"})
     >>> print post
     hi:None
-    >>> post.save()
+    >>> post.save() # Note since we are using the slow_memory backend, this is not actually saved.
     <__main__.BlogPost object at ...>
 
 Modifying the document is easy too::
 
     >>> post.title = "Hello"
     >>> post.content = "mrrow"
-    >>> post.save() #doctest: +ELLIPSIS
+    >>> post.save()
     <__main__.BlogPost object at ...>
     >>> print post
     Hello:mrrow
@@ -46,7 +45,7 @@ Modifying the document is easy too::
 
 Since title is required, trying to save an object without a title won't work::
 
-    >>> another_post = BlogPost(content="lolol")
+    >>> another_post = BlogPost(data={"content": "lolol"})
     >>> another_post.save()
     Traceback (most recent call last):
         ...
@@ -105,5 +104,10 @@ Indexes
 
 Backends that support indexes can retrieve data not just via the key, but also
 some field and values. Here are some examples::
+
+
+    class BlogPost(Document):
+      _backend = slow_memory
+
 
 

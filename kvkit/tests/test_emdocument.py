@@ -101,6 +101,11 @@ class EmDocumentTest(unittest.TestCase):
     del doc.sr
     self.assertEquals(["sr", "sv"], sorted(doc.invalids()))
 
+  def test_required(self):
+    doc = SimpleDocument()
+    doc.sv = "valid"
+    self.assertFalse(doc.is_valid())
+
   def test_merge(self):
     doc = SimpleDocument()
 

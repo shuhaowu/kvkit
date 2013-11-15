@@ -19,7 +19,7 @@ from __future__ import absolute_import
 import unittest
 
 from ..document import Document, EmDocument
-from ..exceptions import NotFoundError
+from ..exceptions import NotFoundError, ValidationError
 from ..properties import (
     StringProperty,
     NumberProperty,
@@ -167,6 +167,21 @@ class BasicDocumentTest(unittest.TestCase):
 
     _test_keys_only(self, None, "test_str_index", "quack")
     _test_keys_only(self, None, "test_number_index", 1336)
+
+  def test_validation(self):
+    # Test for required
+    doc = SimpleDocument()
+    doc.sv = "valid"
+
+    with self.assertRaises(ValidationError):
+      doc.save()
+
+    # Test for validator fail
+    doc = SimpleDocument()
+    doc.sr = "yay"
+    doc.sv = "invalid"
+    with self.assertRaises(ValidationError):
+      doc.save()
 
   def test_2i_iterator(self):
     doc = SomeDocument()
