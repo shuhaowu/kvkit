@@ -24,14 +24,6 @@
 
 from __future__ import absolute_import
 
-try:
-  import ujson as json
-except ImportError:
-  try:
-    import simplejson as json
-  except ImportError:
-    import json
-
 from uuid import uuid1
 
 from .emdocument import EmDocument, EmDocumentMetaclass
@@ -196,7 +188,7 @@ class Document(EmDocument):
       kvs = cls._backend.index(cls, field, start_value, end_value, **args)
 
     for key, value in kvs:
-      yield cls(key=key, data=json.loads(value))
+      yield cls(key=key, data=value)
 
   def __init__(self, key=lambda: uuid1().hex, data={}, **args):
     """Initializes a new document.
@@ -238,7 +230,6 @@ class Document(EmDocument):
       NotFoundError
     """
     value = self._backend.get(self.__class__, self.key, **args)
-    value = json.loads(value)
     self.deserialize(value)
     return self
 
@@ -253,7 +244,7 @@ class Document(EmDocument):
     Raises:
       ValidationError
     """
-    value = json.dumps(self.serialize())
+    value = self.serialize()
     self._backend.save(self.__class__, self.key, value, **args)
     return self
 

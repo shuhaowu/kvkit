@@ -306,7 +306,7 @@ class EmDocument(object):
     if name in self._data:
       if name in self._props_to_load:
         self._data[name] = self._meta[name].from_db(self._data[name])
-        self._prop_to_load.discard(name)
+        self._props_to_load.discard(name)
       return self._data[name]
     self._attribute_not_found(name)
 

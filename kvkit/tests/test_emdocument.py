@@ -43,9 +43,6 @@ class DefinedOnlyDocument(EmDocument):
 class OverrideDocument(DefinedOnlyDocument):
   prop = NumberProperty()
 
-class DocumentWithLoadOnDemand(EmDocument):
-  d = EmDocumentProperty(SimpleDocument, load_on_demand=True)
-
 class EmDocumentTest(unittest.TestCase):
   def test_property_initialization(self):
     doc = SimpleDocument()

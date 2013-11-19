@@ -52,6 +52,9 @@ class DocumentWithRef(BaseDocument):
 class DocumentLater(BaseDocument):
   pass
 
+class DocumentWithLoadOnDemand(BaseDocument):
+  d = ReferenceProperty(SimpleDocument, load_on_demand=True)
+
 class Mixin(EmDocument):
   test = StringProperty(validators=lambda v: v == "test")
   test_index = StringProperty(index=True)
@@ -116,6 +119,20 @@ class BasicDocumentTest(unittest.TestCase):
     doc2_copy = DocumentWithRef.get(doc2.key)
     self.assertEquals(doc2.key, doc2_copy.key)
     self.assertEquals(doc.key, doc2_copy.ref.key)
+
+  def test_load_on_demand(self):
+    sdoc = SimpleDocument(data={"s": "yay", "sv": "valid", "sr": "required"})
+    sdoc.save()
+    doc = DocumentWithLoadOnDemand(data={"d": sdoc})
+    doc.save()
+
+    d = DocumentWithLoadOnDemand.get(doc.key)
+
+    # Should be just a key
+    self.assertTrue(isinstance(d._data["d"], basestring))
+    self.assertEquals(sdoc.key, d.d.key)
+    self.assertEquals(d.d.s, sdoc.s)
+
 
   def test_2i_save_delete(self):
     doc = SomeDocument()

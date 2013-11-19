@@ -314,4 +314,7 @@ class ReferenceProperty(BaseProperty):
     except NotFoundError, e:
       if self.strict:
         raise e
+      return None
+
     return doc
+

@@ -17,7 +17,6 @@
 from __future__ import absolute_import
 
 import bisect
-import json
 
 from ..exceptions import NotFoundError
 
@@ -42,7 +41,6 @@ def index(cls, field, start_value, end_value=None, **args):
   # slow implementation is okay for mock.
   kvs = []
   for k, v in _db.iteritems():
-    v = json.loads(v)
     if field in v:
       if not isinstance(v[field], (list, tuple)):
         vfield = [v[field]]
@@ -51,7 +49,7 @@ def index(cls, field, start_value, end_value=None, **args):
       for fv in vfield:
         if fv >= start_value:
           if (end_value is None and fv == start_value) or fv <= end_value:
-            kvs.append((k, json.dumps(v)))
+            kvs.append((k, v))
             break
 
   return sorted(kvs)
