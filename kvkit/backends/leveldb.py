@@ -13,3 +13,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Riakkit or Leveldbkit. If not, see <http://www.gnu.org/licenses/>.
+
+"""This backend uses leveldb to store data.
+
+Note that leveldb can only have one process accessing it. Therefore this might
+not be a good idea if you need multiprocesses.
+"""

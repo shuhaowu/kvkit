@@ -14,6 +14,13 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Riakkit or Leveldbkit. If not, see <http://www.gnu.org/licenses/>.
 
+"""This backend uses the memory to store data.
+
+This should **not** be used as it is very very slow for index operations.
+
+A good one for unittests, however.
+"""
+
 from __future__ import absolute_import
 
 import bisect
@@ -24,6 +31,7 @@ from ..exceptions import NotFoundError
 _db = {}
 
 def cleardb():
+  """Clears the database."""
   global _db
   _db = {}
 
