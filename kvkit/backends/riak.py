@@ -18,3 +18,46 @@
 
 For more information about Riak, checkout https://basho.com/riak/.
 """
+
+from __future__ import absolute_import
+
+from ..exceptions import ValidationError, NotFoundError
+
+def clear_document(self, **args):
+  pass
+
+
+def delete(cls, key, **args):
+  pass
+
+
+def get(cls, key, **args):
+  pass
+
+
+def index(cls, field, start_value, end_value=None, **args):
+  pass
+
+
+def index_keys_only(cls, field, start_value, end_value=None, **args):
+  pass
+
+
+def init_class(cls):
+  pass
+
+
+def init_document(self, **args):
+  pass
+
+
+def list_all(cls, start_value=None, end_value=None, **args):
+  pass
+
+
+def list_all_keys(cls, start_value=None, end_value=None, **args):
+  pass
+
+
+def save(cls, key, data, **args):
+  pass

@@ -48,7 +48,7 @@ class EmDocumentMetaclass(type):
         indexes += list(p_cls._indexes)
 
     for name in attrs.keys():
-      if name == "_backend":
+      if name.startswith("_"):
         continue
 
       if isinstance(attrs[name], BaseProperty):

@@ -173,7 +173,7 @@ def save(cls, key, data, **args):
   """
   raise NotImplementedError
 
-def delete(self, key, **args):
+def delete(cls, key, **args):
   """Deletes cls key from the db.
 
   Args:
