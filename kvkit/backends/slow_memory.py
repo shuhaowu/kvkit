@@ -18,6 +18,8 @@
 
 This should **not** be used as it is very very slow for index operations.
 
+Should also not really use as right now it does not segregate between classes.
+
 A good one for unittests, however.
 """
 
@@ -88,7 +90,7 @@ def list_all_keys(cls, start_value=None, end_value=None, **args):
     return keys
 
 def list_all(cls, start_value=None, end_value=None, **args):
-  return [(k, _db[k])for k in list_all_keys(cls, start_value, end_value, **args)]
+  return [(k, _db[k]) for k in list_all_keys(cls, start_value, end_value, **args)]
 
 def clear_document(self):
   pass
