@@ -7,7 +7,13 @@ before_install:
   - "sudo apt-get update"
   - "yes n | sudo apt-get install riak"
   - "sudo service riak start"
-  - "sudo apt-get install libleveldb-dev"
+  - "wget http://leveldb.googlecode.com/files/leveldb-1.14.0.tar.gz"
+  - "tar xvf leveldb-1*"
+  - "cd leveldb*"
+  - "make"
+  - "sudo cp --preserve=links libleveldb.* /usr/local/lib"
+  - "sudo cp -r include/leveldb /usr/local/include/"
+  - "sudo ldconfig"
 install:
   - pip install -r requirements.txt --use-mirrors
 script: nosetests
