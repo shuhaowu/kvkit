@@ -2,6 +2,12 @@ kvkit
 =====
 
 **kvkit** is an object mapper and a RAD tool for key value stores.
+
+Currently, supported backends include:
+
+  - leveldb
+  - riak
+
 This project serves as a replacement for [riakkit][rk] and [leveldbkit][lk].
 
 [rk]: https://github.com/shuhaowu/riakkit
