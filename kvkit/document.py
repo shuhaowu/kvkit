@@ -233,6 +233,11 @@ class Document(EmDocument):
     self.deserialize(value)
     return self
 
+  def deserialize(self, data):
+    EmDocument.deserialize(self, data)
+    self._backend.post_deserialize(self, data)
+    return self
+
   def save(self, **args):
     """Saves an object into the db.
 
@@ -245,7 +250,7 @@ class Document(EmDocument):
       ValidationError
     """
     value = self.serialize()
-    self._backend.save(self.__class__, self.key, value, **args)
+    self._backend.save(self, self.key, value, doc=self, **args)
     return self
 
   def delete(self, **args):
@@ -259,7 +264,7 @@ class Document(EmDocument):
     Returns:
       self
     """
-    self._backend.delete(self.__class__, self.key, **args)
+    self._backend.delete(self.__class__, self.key, doc=self, **args)
     self.clear(False)
     return self
 

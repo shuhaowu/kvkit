@@ -109,3 +109,6 @@ def delete(cls, key, **args):
     del _db[key]
   except KeyError:
     pass
+
+def post_deserialize(self, data):
+  pass

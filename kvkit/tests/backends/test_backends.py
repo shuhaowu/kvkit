@@ -249,7 +249,7 @@ def create_testcase(BaseDocument, SimpleDocument, DocumentWithIndexes, name, cle
       doc2 = SimpleDocument("2").save()
       doc3 = SimpleDocument("3").save()
 
-      results = backend.list_all_keys(SimpleDocument, "1", "2")
+      results = list(backend.list_all_keys(SimpleDocument, "1", "2"))
 
       self.assertEquals(2, len(results))
       self.assertTrue(doc1.key in results)

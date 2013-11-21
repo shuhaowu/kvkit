@@ -180,12 +180,14 @@ def save(self, key, data, **args):
   """
   raise NotImplementedError
 
-def delete(cls, key, **args):
+def delete(cls, key, doc=None, **args):
   """Deletes cls key from the db.
 
   Args:
     cls: The class to delete from
     key: The key to delete
+    doc: If the delete originated from a document, this will be pointing to
+         the document instance.
     **args: additional arguments passed in from ``Document.delete_key`` or
         ``doc.delete()``.
 
@@ -194,6 +196,23 @@ def delete(cls, key, **args):
 
   Note:
     If the object does not exists in the backend, this will just return.
+  """
+  raise NotImplementedError
+
+def post_deserialize(self, data):
+  """Runs after deserializing an object.
+
+  This is probably because the object has been loaded from the db.
+
+  Args:
+    self: The document object after deserializing.
+    data: The original data deserialized.
+
+  Returns:
+    None
+
+  Raise:
+    None or else deserializing won't work.
   """
   raise NotImplementedError
 
