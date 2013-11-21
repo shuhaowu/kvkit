@@ -14,6 +14,7 @@ before_install:
   - "sudo cp --preserve=links libleveldb.* /usr/local/lib"
   - "sudo cp -r include/leveldb /usr/local/include/"
   - "sudo ldconfig"
+  - "cd .."
 install:
   - pip install -r requirements.txt --use-mirrors
 script: nosetests
