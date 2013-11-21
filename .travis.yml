@@ -7,6 +7,7 @@ before_install:
   - "sudo apt-get update"
   - "yes n | sudo apt-get install riak"
   - "sudo service riak start"
+  - "sudo apt-get install libleveldb-dev"
 install:
   - pip install -r requirements.txt --use-mirrors
 script: nosetests
