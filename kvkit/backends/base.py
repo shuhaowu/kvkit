@@ -29,6 +29,13 @@ def init_class(cls):
   It is encouraged that if and when you transform classes, you use a namespace like
   cls.<backend>_meta = {} and stick your variables in there.
 
+  Furthermore, this function should not fail when whatever variables you
+  defined is not present because tests might set those options /after/ the
+  class has already been initialized by the metaclass. The tests will set
+  the variables and manually call ``init_class`` again.
+
+  It could also be the case that this is a parent base class.
+
   Args:
     cls: The class that was just created.
 
@@ -159,11 +166,11 @@ def get(cls, key, **args):
   """
   raise NotImplementedError
 
-def save(cls, key, data, **args):
+def save(self, key, data, **args):
   """Saves a key and a json document into the backend.
 
   Args:
-    cls: The document class to save with.
+    self: The document object to be saved.
     key: The key to save
     data: The json document to save.
     **args: The arguments passed from ``doc.save()``
@@ -224,5 +231,5 @@ class BackendBase(object):
   def save(self, cls, key, data, **args):
     raise NotImplementedError
 
-  def delete(self, cls, key, **args):
+  def delete(self, doc, key, **args):
     raise NotImplementedError

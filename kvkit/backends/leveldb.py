@@ -34,7 +34,9 @@ import plyvel
 
 from ..exceptions import NotFoundError
 
+
 index_key = lambda f, v: "{0}~{1}".format(f, v)
+
 
 def clear_document(self, **args):
   self.__dict__["_leveldb_old_indexes"] = {}
@@ -53,33 +55,75 @@ def get(cls, key, **args):
 
 
 def index(cls, field, start_value, end_value=None, **args):
-  pass
+  indexdb = cls._leveldb_meta["indexdb"]
+  if end_value is None:
+    ik = index_key(field, start_value)
+    v = indexdb.get(ik)
+
+    if v is None:
+      keys = []
+    else:
+      keys = json.loads(v)
+
+    for k in keys:
+      yield cls(k).reload()
+
+  else:
+    with indexdb.iterator(start=start_value,
+                          stop=end_value,
+                          include_stop=True) as it:
+      for _, keys in it:
+        yield cls(k).reload()
 
 
 def index_keys_only(cls, field, start_value, end_value=None, **args):
-  pass
+  indexdb = cls._leveldb_meta["indexdb"]
+  if end_value is None:
+    ik = index_key(field, start_value)
+    v = indexdb.get(ik)
+    if v is None:
+      return []
+    else:
+      return json.loads(indexdb.get(ik))
+  else:
+    all_keys = []
+    with indexdb.iterator(start=start_value,
+                          stop=end_value,
+                          include_stop=True) as it:
+      for _, keys in it:
+        all_keys.extend(json.loads(keys))
+
+    return all_keys
 
 
 def init_class(cls):
+  if not hasattr(cls, "_leveldb_options"):
+    # must be in test mode
+    return
+
   setattr(cls, "_leveldb_meta", {})
 
-  def open_connections():
+  def open_connections(cls):
+
     db = cls._leveldb_options.get("db")
     indexdb = cls._leveldb_options.get("indexdb")
     if isinstance(db, basestring):
       cls._leveldb_meta["db"] = plyvel.DB(db, create_if_missing=True)
 
-    if isinstance(indexdb):
+    if isinstance(indexdb, basestring):
       cls._leveldb_meta["indexdb"] = plyvel.DB(indexdb, create_if_missing=True)
 
-  def close_connections():
-    cls._leveldb_meta["db"].close()
-    cls._leveldb_meta["indexdb"].close()
+  def close_connections(cls):
+    if cls._leveldb_meta.get("db"):
+      cls._leveldb_meta["db"].close()
 
-  cls.open_leveldb_connections = open_connections
+    if cls._leveldb_meta.get("indexdb"):
+      cls._leveldb_meta["indexdb"].close()
+
+  cls.open_leveldb_connections = classmethod(open_connections)
   cls.open_leveldb_connections()
 
-  cls.close_leveldb_connections = close_connections
+  cls.close_leveldb_connections = classmethod(close_connections)
 
 
 def init_document(self, **args):

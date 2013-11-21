@@ -29,7 +29,6 @@ from ..properties import (
 
 from ..backends import slow_memory
 
-
 class BaseDocument(Document):
   _backend = slow_memory
 
