@@ -70,9 +70,12 @@ def index_keys_only(cls, field, start_value, end_value=None, **args):
           field += "_bin"
 
   index_page = cls._riak_options["bucket"].get_index(field, start_value, end_value, return_terms=False, **args)
-  while index_page.has_next_page():
-    for key in index_page:
-      yield key
+  keys_iterated = set()
+  for key in index_page:
+    if key in keys_iterated:
+      continue
+    keys_iterated.add(key)
+    yield key
 
 
 def init_class(cls):

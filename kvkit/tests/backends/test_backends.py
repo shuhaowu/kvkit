@@ -170,6 +170,7 @@ def create_testcase(BaseDocument, SimpleDocument, DocumentWithIndexes, name, cle
 
       # Testing single value
       doc1 = DocumentWithIndexes(data={"string": "abc"}).save()
+
       results = list(backend.index_keys_only(DocumentWithIndexes, "string", "abc"))
       self.assertEquals(1, len(results))
       self.assertTrue(doc1.key in results)
@@ -185,6 +186,7 @@ def create_testcase(BaseDocument, SimpleDocument, DocumentWithIndexes, name, cle
       doc3 = DocumentWithIndexes(data={"number": 4}).save()
       doc4 = DocumentWithIndexes(data={"number": 5.5}).save()
       doc5 = DocumentWithIndexes(data={"number": 6}).save()
+
 
       results = list(backend.index_keys_only(DocumentWithIndexes, "number", 4, 5.5))
       self.assertEquals(2, len(results))
