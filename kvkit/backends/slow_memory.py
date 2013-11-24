@@ -58,14 +58,14 @@ def index(cls, field, start_value, end_value=None, **args):
       for fv in vfield:
         if fv >= start_value:
           if (end_value is None and fv == start_value) or fv <= end_value:
-            kvs.append((k, v))
+            kvs.append((k, v, None))
             break
 
   return sorted(kvs)
 
 def index_keys_only(cls, field, start_value, end_value=None, **args):
   kvs = index(cls, field, start_value, end_value, **args)
-  return [k for k, _ in kvs]
+  return [k for k, _, _ in kvs]
 
 def list_all_keys(cls, start_value=None, end_value=None, **args):
   keys = sorted(_db.keys())
@@ -89,14 +89,14 @@ def list_all_keys(cls, start_value=None, end_value=None, **args):
     return keys
 
 def list_all(cls, start_value=None, end_value=None, **args):
-  return [(k, _db[k]) for k in list_all_keys(cls, start_value, end_value, **args)]
+  return [(k, _db[k], None) for k in list_all_keys(cls, start_value, end_value, **args)]
 
 def clear_document(self):
   pass
 
 def get(cls, key, **args):
   try:
-    return _db[key]
+    return _db[key], None
   except KeyError:
     raise NotFoundError
 

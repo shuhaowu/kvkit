@@ -86,7 +86,7 @@ def create_testcase(BaseDocument, SimpleDocument, DocumentWithIndexes, name, cle
         backend.get(SimpleDocument, "non-existent")
 
       doc = SimpleDocument().save()
-      v = backend.get(SimpleDocument, doc.key)
+      v, _ = backend.get(SimpleDocument, doc.key)
       self.assertEquals(doc.serialize(), v)
 
     def test_index(self):
@@ -100,7 +100,7 @@ def create_testcase(BaseDocument, SimpleDocument, DocumentWithIndexes, name, cle
       results = list(backend.index(DocumentWithIndexes, "string", "abc"))
       self.assertEquals(1, len(results))
 
-      key, value = results[0]
+      key, value, _ = results[0]
       self.assertEquals(key, doc1.key)
       self.assertEquals(value, doc1.serialize())
 

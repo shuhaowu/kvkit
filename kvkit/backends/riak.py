@@ -21,6 +21,14 @@ For more information about Riak, checkout https://basho.com/riak/.
 
 from __future__ import absolute_import
 
+try:
+  import riak
+except ImportError:
+  available = False
+else:
+  available = True
+
+from ..document import Document
 from ..exceptions import ValidationError, NotFoundError
 
 def clear_document(self, **args):
@@ -32,7 +40,7 @@ def delete(cls, key, doc=None, **args):
 
 
 def get(cls, key, **args):
-  pass
+  robj = cls._riak_options["bucket"].get(key)
 
 
 def index(cls, field, start_value, end_value=None, **args):
@@ -44,8 +52,24 @@ def index_keys_only(cls, field, start_value, end_value=None, **args):
 
 
 def init_class(cls):
-  pass
+  if not hasattr(cls, "_riak_options"):
+    return
 
+  setattr(cls, "_riak_meta", {})
+
+  bucket = cls._riak_options["bucket"]
+  bucket.resolver = cls._riak_options["bucket"].get("resolver")
+
+  # I feel like I am abusing python's reflection.
+  def add_link(self, obj, tag=None):
+    if isinstance(obj, Document):
+      # Assuming the foreign object's backend is riak.
+      obj = obj._riak_object
+    self._riak_object.add_link(obj, tag)
+    return self
+
+  cls.add_link = add_link
+  cls.links = property(get_links, set_links)
 
 def init_document(self, **args):
   pass
@@ -60,4 +84,10 @@ def list_all_keys(cls, start_value=None, end_value=None, **args):
 
 
 def save(self, key, data, **args):
-  pass
+  self._riak_object.data = data
+
+  indexes = {}
+  for name in self.__class__._indexes:
+    indexes[name] = data.get(name)
+
+  self._riak_object.indexes = indexes

@@ -90,7 +90,7 @@ def index(cls, field, start_value, end_value=None, **args):
     The same as ``index_keys_only``.
 
   Returns:
-    An iterator for (key, json document)
+    An iterator for (key, json document, backend representation)
 
   Note:
     This could just be loading from index_keys_only. However, it should attempt
@@ -126,7 +126,7 @@ def list_all(cls, start_value=None, end_value=None, **args):
     The same as list_all_keys
 
   Returns:
-    An iterator for (key, json document)
+    An iterator for (key, json document, backend_obj)
 
   Note:
     This could just be loading from list_all_keys. However, it should attempt
@@ -137,7 +137,8 @@ def list_all(cls, start_value=None, end_value=None, **args):
 def clear_document(self, **args):
   """Called after the document gets cleared.
 
-  Used for clearing meta/indexes, or whatever.
+  Used for clearing meta/indexes, or whatever. Also needs to handle the
+  clearing of the _backend_obj
 
   Args:
     self: The document
@@ -159,7 +160,10 @@ def get(cls, key, **args):
     **args: Any additional arguments passed from ``Document.get``
 
   Returns:
-    The json document in dictionary form if available.
+    (JSON document, backend representation of the object (like RiakObject))
+
+  Note:
+    This backend representation would be set as _backend_obj on the Document.
 
   Raises:
     NotFoundError if this is not found

@@ -99,9 +99,9 @@ class Document(EmDocument):
       that depends on the backend.
     """
     if field == "$bucket":
-      return cls.list_all_keys()
+      return cls._backend.list_all_keys(cls)
     elif field == "$key":
-      return cls.list_all_keys(start_value, end_value, **args)
+      return cls._backend.list_all_keys(cls, start_value, end_value, **args)
 
     if isinstance(cls._meta[field], NumberProperty):
       start_value = float(start_value)
@@ -148,12 +148,16 @@ class Document(EmDocument):
       end_value: if specified, it will be the end of a range.
 
     Returns:
+      A generator with the following properties:
       allobjs[start_value:] if only start_value is given,
       allobjs[start_value:end_value+1] if end_value is given. The +1 is
       largely a metaphor, as it will return all the values that ==
       end_value.
     """
-    return cls._backend.list_all(cls, start_value, end_value, **args)
+    kvs = cls._backend.list_all(cls, start_value, end_value, **args)
+    for k, v, backend_obj in kvs:
+      yield cls(key=k, data=v, backend_obj=backend_obj)
+
 
   @classmethod
   def index(cls, field, start_value, end_value=None, **args):
@@ -176,9 +180,9 @@ class Document(EmDocument):
     """
     kvs = []
     if field == "$bucket":
-      kvs = cls.list_all()
+      kvs = cls._backend.list_all(cls)
     elif field == "$key":
-      kvs = cls.list_all(start_value, end_value, **args)
+      kvs = cls._backend.list_all(cls, start_value, end_value, **args)
     else:
       if isinstance(cls._meta[field], NumberProperty):
         start_value = float(start_value)
@@ -187,10 +191,10 @@ class Document(EmDocument):
 
       kvs = cls._backend.index(cls, field, start_value, end_value, **args)
 
-    for key, value in kvs:
-      yield cls(key=key, data=value)
+    for key, value, backend_obj in kvs:
+      yield cls(key=key, data=value, backend_obj=backend_obj)
 
-  def __init__(self, key=lambda: uuid1().hex, data={}, **args):
+  def __init__(self, key=lambda: uuid1().hex, data={}, backend_obj=None, **args):
     """Initializes a new document.
 
     Args:
@@ -198,6 +202,8 @@ class Document(EmDocument):
           By default it generates an uuid1 hex.
 
       data: The data to be merged in.
+      backend_obj: The object representation for the backend. Stored as
+          self._backend_obj. Should not be touching unless you're the backend.
 
       **args: gets passed into EmDocument's __init__
 
@@ -210,6 +216,7 @@ class Document(EmDocument):
 
     self.__dict__["key"] = key
     EmDocument.__init__(self, data)
+    self.__dict__["_backend_obj"] = backend_obj
 
     self._backend.init_document(self, **args)
 
@@ -229,7 +236,8 @@ class Document(EmDocument):
     Raises:
       NotFoundError
     """
-    value = self._backend.get(self.__class__, self.key, **args)
+    value, backend_obj = self._backend.get(self.__class__, self.key, **args)
+    self._backend_obj = backend_obj
     self.deserialize(value)
     return self
 

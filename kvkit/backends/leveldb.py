@@ -30,7 +30,12 @@ except ImportError:
   except ImportError:
     import json
 
-import plyvel
+try:
+  import plyvel
+except ImportError:
+  available = False
+else:
+  available = True
 
 from ..exceptions import NotFoundError
 
@@ -49,7 +54,7 @@ def get(cls, key, **args):
   if value is None:
     raise NotFoundError
 
-  return json.loads(value)
+  return json.loads(value), None
 
 
 def _ensure_indexdb_exists(cls):
@@ -71,7 +76,8 @@ def index(cls, field, start_value, end_value=None, **args):
       keys = json.loads(v)
 
     for k in keys:
-      yield k, get(cls, k)
+      v, o = get(cls, k)
+      yield k, v, o
 
   else:
     it = indexdb.iterator(start=index_key(field, start_value),
@@ -84,7 +90,8 @@ def index(cls, field, start_value, end_value=None, **args):
       for k in json.loads(keys):
         if k not in keys_iterated:
           keys_iterated.add(k)
-          yield k, get(cls, k)
+          v, o = get(cls, k)
+          yield k, v, o
 
 
 def index_keys_only(cls, field, start_value, end_value=None, **args):
@@ -147,7 +154,7 @@ def init_document(self, **args):
 def list_all(cls, start_value=None, end_value=None, **args):
   with cls._leveldb_meta["db"].iterator(start=start_value, stop=end_value, include_stop=True) as it:
     for key, value in it:
-      yield key, json.loads(value)
+      yield key, json.loads(value), None
 
 
 def list_all_keys(cls, start_value=None, end_value=None, **args):
