@@ -158,8 +158,18 @@ class StringProperty(BaseProperty):
 class NumberProperty(BaseProperty):
   """For storing real numbers.
 
-  This always converts to a floating point.
+  This always converts to a floating point, unless integer is specified.
   """
+
+  def __init__(self, **kwargs):
+    """Number Property
+
+    Args:
+      integer: If true, this will be marked as an integer field instead of
+               a floating point field. Defaults to false.
+    """
+    self.integer = kwargs.pop("integer", False)
+    BaseProperty.__init__(self, **kwargs)
 
   def validate(self, value):
     """Checks if value is a number by taking `float(value)`.
@@ -178,7 +188,7 @@ class NumberProperty(BaseProperty):
       return True
 
   def to_db(self, value):
-    return None if value is None else float(value)
+    return None if value is None else (int(value) if self.integer else float(value))
 
 class BooleanProperty(BaseProperty):
   """Boolean property. Values will be converted to boolean upon save.

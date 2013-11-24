@@ -216,7 +216,9 @@ class Document(EmDocument):
 
     self.__dict__["key"] = key
     EmDocument.__init__(self, data)
-    self.__dict__["_backend_obj"] = backend_obj
+
+    if backend_obj is not None:
+      self.__dict__["_backend_obj"] = backend_obj
 
     self._backend.init_document(self, **args)
 
@@ -258,7 +260,7 @@ class Document(EmDocument):
       ValidationError
     """
     value = self.serialize()
-    self._backend.save(self, self.key, value, doc=self, **args)
+    self._backend.save(self, self.key, value, **args)
     return self
 
   def delete(self, **args):

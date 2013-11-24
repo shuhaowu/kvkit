@@ -19,7 +19,13 @@ from __future__ import absolute_import
 import unittest
 import shutil
 
-from ...backends import leveldb, riak, slow_memory
+try:
+  import riak
+except ImportError:
+  pass
+
+from ...backends import leveldb, slow_memory
+from ...backends import riak as riak_backend
 from ...document import Document
 from ...exceptions import NotFoundError
 from ...properties.standard import (
@@ -67,6 +73,11 @@ def create_testcase(BaseDocument, SimpleDocument, DocumentWithIndexes, name, cle
   class BackendSpec(unittest.TestCase):
 
     def tearDown(self):
+      if cleanup:
+        cleanup()
+
+    @classmethod
+    def tearDownClass(cls):
       if cleanup:
         cleanup()
 
@@ -257,9 +268,9 @@ def create_testcase(BaseDocument, SimpleDocument, DocumentWithIndexes, name, cle
 
     # Seems a bit repetitive :P
     def test_save(self):
-      doc1 = SimpleDocument(data={"number": 1})
+      doc1 = SimpleDocument("test-key", data={"number": 1})
       data = doc1.serialize()
-      backend.save(SimpleDocument, "test-key", data)
+      backend.save(doc1, "test-key", data)
 
       doc = SimpleDocument.get("test-key")
       self.assertEquals(1, doc.number)
@@ -280,28 +291,53 @@ SlowMemoryBackendTest = create_testcase(SlowMemoryBaseDocument,
 
 # Leveldb tests
 
-LevelDBBaseDocument, SimpleDocument, DocumentWithIndexes = create_base_documents(leveldb,
-    (None, "_leveldb_options", "_leveldb_options"),
-    (
-      None,
-      {"db": "dbs/test_simple_document"},
-      {"db": "dbs/test_document_indexed", "indexdb": "dbs/test_document_indexed.indexes"}
-    )
-)
+if leveldb.available:
+  LevelDBBaseDocument, SimpleDocument, DocumentWithIndexes = create_base_documents(leveldb,
+      (None, "_leveldb_options", "_leveldb_options"),
+      (
+        None,
+        {"db": "dbs/test_simple_document"},
+        {"db": "dbs/test_document_indexed", "indexdb": "dbs/test_document_indexed.indexes"}
+      )
+  )
 
-def leveldb_clear():
-  SimpleDocument.close_leveldb_connections()
-  DocumentWithIndexes.close_leveldb_connections()
+  def leveldb_clear():
+    SimpleDocument.close_leveldb_connections()
+    DocumentWithIndexes.close_leveldb_connections()
 
-  shutil.rmtree(SimpleDocument._leveldb_options["db"])
-  shutil.rmtree(DocumentWithIndexes._leveldb_options["db"])
-  shutil.rmtree(DocumentWithIndexes._leveldb_options["indexdb"])
+    shutil.rmtree(SimpleDocument._leveldb_options["db"])
+    shutil.rmtree(DocumentWithIndexes._leveldb_options["db"])
+    shutil.rmtree(DocumentWithIndexes._leveldb_options["indexdb"])
 
-  SimpleDocument.open_leveldb_connections()
-  DocumentWithIndexes.open_leveldb_connections()
+    SimpleDocument.open_leveldb_connections()
+    DocumentWithIndexes.open_leveldb_connections()
 
-LeveldbBackendTest = create_testcase(LevelDBBaseDocument,
-                                     SimpleDocument,
-                                     DocumentWithIndexes,
-                                     "LeveldbBackendTest",
-                                     leveldb_clear)
+  LeveldbBackendTest = create_testcase(LevelDBBaseDocument,
+                                       SimpleDocument,
+                                       DocumentWithIndexes,
+                                       "LeveldbBackendTest",
+                                       leveldb_clear)
+
+if riak_backend.available:
+  client = riak.RiakClient()
+  simple_bucket = client.bucket("test_kvkit_simple_document")
+  indexed_bucket = client.bucket("test_kvkit_document_with_indexes")
+  RiakBaseDocument, RiakSimpleDocument, RiakDocumentWithIndexes = create_base_documents(riak_backend,
+      (None, "_riak_options", "_riak_options"),
+      (None, {"bucket": simple_bucket}, {"bucket": simple_bucket})
+  )
+
+  def riak_clear():
+    for keylist in simple_bucket.stream_keys():
+      for key in keylist:
+        simple_bucket.delete(key)
+
+    for keylist in indexed_bucket.stream_keys():
+      for key in keylist:
+        indexed_bucket.delete(key)
+
+  RiakBackendTest = create_testcase(RiakBaseDocument,
+                                    RiakSimpleDocument,
+                                    RiakDocumentWithIndexes,
+                                    "RiakBackendTest",
+                                    riak_clear)

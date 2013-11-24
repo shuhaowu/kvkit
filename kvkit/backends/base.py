@@ -77,6 +77,10 @@ def index_keys_only(cls, field, start_value, end_value=None, **args):
   Returns:
     An iterator of keys only.
 
+  Raises:
+    kvkit.exceptions.NotIndexed if not indexed. This is optional, however, as
+    backends might be able to index anyway..
+
   Note:
     This exists because some backends might have optimizations getting only
     keys as oppose to the document itself.
@@ -91,6 +95,9 @@ def index(cls, field, start_value, end_value=None, **args):
 
   Returns:
     An iterator for (key, json document, backend representation)
+
+  Raises:
+    kvkit.exceptions.NotIndexed if not indexed.
 
   Note:
     This could just be loading from index_keys_only. However, it should attempt

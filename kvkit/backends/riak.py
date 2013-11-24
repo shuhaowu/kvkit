@@ -26,29 +26,53 @@ try:
 except ImportError:
   available = False
 else:
+  from riak.resolver import default_resolver
   available = True
 
 from ..document import Document
-from ..exceptions import ValidationError, NotFoundError
+from ..exceptions import ValidationError, NotFoundError, NotIndexed
+from ..properties import StringProperty, ListProperty, ReferenceProperty, NumberProperty
 
 def clear_document(self, **args):
-  pass
+  self._backend_object = self.__class__._riak_options["bucket"].new(self.key)
 
 
 def delete(cls, key, doc=None, **args):
-  pass
+  cls._riak_options["bucket"].delete(key, **args)
 
 
 def get(cls, key, **args):
-  robj = cls._riak_options["bucket"].get(key)
+  robj = cls._riak_options["bucket"].get(key, **args)
+  if robj.encoded_data is None:
+    raise NotFoundError
+
+  return robj.data, robj
 
 
 def index(cls, field, start_value, end_value=None, **args):
-  pass
+  for key in index_keys_only(cls, field, start_value, end_value, **args):
+    data, ro = get(cls, key)
+    yield key, data, ro
 
 
 def index_keys_only(cls, field, start_value, end_value=None, **args):
-  pass
+  if field not in ("$bucket", "$key"):
+    if field not in cls._indexes:
+      raise NotIndexed("Field '%field' not indexed.")
+
+    if not field.endswith("_bin") and not field.endswith("_int"):
+      if isinstance(cls._meta[field], (ReferenceProperty, StringProperty, ListProperty)):
+        field += "_bin"
+      elif isinstance(cls._meta[field], NumberProperty):
+        if cls._meta[field].integer:
+          field += "_int"
+        else:
+          field += "_bin"
+
+  index_page = cls._riak_options["bucket"].get_index(field, start_value, end_value, return_terms=False, **args)
+  while index_page.has_next_page():
+    for key in index_page:
+      yield key
 
 
 def init_class(cls):
@@ -58,36 +82,61 @@ def init_class(cls):
   setattr(cls, "_riak_meta", {})
 
   bucket = cls._riak_options["bucket"]
-  bucket.resolver = cls._riak_options["bucket"].get("resolver")
+  bucket.resolver = cls._riak_options.get("resolver", default_resolver)
 
   # I feel like I am abusing python's reflection.
   def add_link(self, obj, tag=None):
     if isinstance(obj, Document):
       # Assuming the foreign object's backend is riak.
-      obj = obj._riak_object
-    self._riak_object.add_link(obj, tag)
+      obj = obj._backend_object
+    self._backend_object.add_link(obj, tag)
     return self
+
+  def get_links(self):
+    return self._backend_object.links
+
+  def set_links(self, value):
+    self._backend_object.links = value
 
   cls.add_link = add_link
   cls.links = property(get_links, set_links)
+
 
 def init_document(self, **args):
   pass
 
 
-def list_all(cls, start_value=None, end_value=None, **args):
-  pass
-
-
 def list_all_keys(cls, start_value=None, end_value=None, **args):
-  pass
+  if start_value is None:
+    start_value = "_"
+  return index_keys_only(cls, "$bucket", start_value, end_value, **args)
+
+
+def list_all(cls, start_value=None, end_value=None, **args):
+  if start_value is None:
+    start_value = "_"
+  return index(cls, "$bucket", start_value, end_value, **args)
 
 
 def save(self, key, data, **args):
-  self._riak_object.data = data
+  self._backend_object.data = data
 
-  indexes = {}
+  indexes = set()
   for name in self.__class__._indexes:
-    indexes[name] = data.get(name)
+    if isinstance(self._meta[name], (StringProperty, ReferenceProperty)):
+      indexes.add((name + "_bin", data[name]))
+    elif isinstance(self._meta[name], ListProperty):
+      field = name + "_bin"
+      for value in data[name]:
+        indexes.add((field, value))
+    elif isinstance(self._meta[name], NumberProperty):
+      if self._meta[name].integer:
+        indexes.add((name + "_int", data[name]))
+      else:
+        indexes.add((name + "_bin", str(data[name])))
 
-  self._riak_object.indexes = indexes
+  self._backend_object.indexes = list(indexes)
+  self._backend_object.store(**args)
+
+def post_deserialize(self, data):
+  pass

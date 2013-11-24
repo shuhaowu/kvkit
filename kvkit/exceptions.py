@@ -18,3 +18,4 @@ class KVKitError(Exception): pass
 class ValidationError(KVKitError): pass
 class NotFoundError(KVKitError): pass
 class DatabaseError(KVKitError): pass
+class NotIndexed(KVKitError): pass

@@ -102,8 +102,15 @@ class StandardPropertiesTest(unittest.TestCase):
     self.assertTrue(prop.validate("3.14"))
     self.assertEquals(3.14, prop.to_db(3.14))
 
+    prop = NumberProperty(integer=True)
+
+    self.assertTrue(prop.integer)
+    self.assertTrue(prop.validate("3.14"))
+    self.assertEquals(3, prop.to_db(3.14))
+
     # Yup, gotta preprocess this yourself
     self.assertFalse(prop.validate("0x99"))
+
 
   def test_booleanprop(self):
     """Test case for boolean property"""
