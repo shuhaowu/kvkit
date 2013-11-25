@@ -33,7 +33,9 @@ except ImportError:
 try:
   import plyvel
 except ImportError:
+  import warning
   available = False
+  warnings.warn("LevelDB not available as plyvel is not installed.")
 else:
   available = True
 

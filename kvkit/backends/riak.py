@@ -24,7 +24,9 @@ from __future__ import absolute_import
 try:
   import riak
 except ImportError:
+  import warnings
   available = False
+  warnings.warn("Riak not available as riak-python-client is not installed.")
 else:
   from riak.resolver import default_resolver
   available = True
