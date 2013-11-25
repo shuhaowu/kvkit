@@ -24,6 +24,14 @@
 
 from __future__ import absolute_import
 
+try:
+  # We prefer ujson, then simplejson, then json
+  import ujson as json
+except ImportError:
+  try:
+    import simplejson as json
+  except ImportError:
+    import json
 from uuid import uuid1
 
 from .emdocument import EmDocument, EmDocumentMetaclass
@@ -249,10 +257,12 @@ class Document(EmDocument):
     Args:
       include_key: If true, the key will be available as the field "key"
     """
-    item = EmDocument.serialize(self, **args)
+    dictionary = args.pop("dictionary", True)
+    item = EmDocument.serialize(self, dictionary=True, **args)
     if include_key:
       item["key"] = self.key
-    return item
+
+    return item if dictionary else json.dumps(item)
 
   def deserialize(self, data):
     EmDocument.deserialize(self, data)

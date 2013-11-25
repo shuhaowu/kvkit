@@ -16,6 +16,7 @@
 
 from __future__ import absolute_import
 
+import json
 import unittest
 
 from ..document import Document, EmDocument
@@ -68,6 +69,11 @@ class BasicDocumentTest(unittest.TestCase):
   def test_serialize_with_key(self):
     doc = DocumentLater()
     item = doc.serialize(include_key=True)
+    self.assertTrue("key" in item)
+    self.assertEquals(doc.key, item["key"])
+
+    item = doc.serialize(include_key=True, dictionary=False)
+    item = json.loads(item)
     self.assertTrue("key" in item)
     self.assertEquals(doc.key, item["key"])
 
