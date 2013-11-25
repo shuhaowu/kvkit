@@ -124,6 +124,7 @@ def list_all(cls, start_value=None, end_value=None, **args):
 
 
 def save(self, key, data, **args):
+  self._backend_object.key = key
   self._backend_object.data = data
 
   indexes = set()

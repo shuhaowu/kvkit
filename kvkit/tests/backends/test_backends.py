@@ -289,6 +289,18 @@ def create_testcase(BaseDocument, SimpleDocument, DocumentWithIndexes, name, cle
       doc = SimpleDocument.get("test-key")
       self.assertEquals(1, doc.number)
 
+    def test_save_with_key_change(self):
+      doc1 = SimpleDocument("test-key", data={"number": 1})
+      data = doc1.serialize()
+
+      backend.save(doc1, "test-key", data)
+
+      doc1.key = "changed-key"
+      backend.save(doc1, "changed-key", data)
+
+      doc2 = SimpleDocument.get("changed-key")
+      self.assertEquals(1, doc2.number)
+
   BackendSpec.__name__ = name
   return BackendSpec
 
