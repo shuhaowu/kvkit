@@ -65,6 +65,12 @@ class BasicDocumentTest(unittest.TestCase):
   def tearDown(self):
     slow_memory.cleardb()
 
+  def test_serialize_with_key(self):
+    doc = DocumentLater()
+    item = doc.serialize(include_key=True)
+    self.assertTrue("key" in item)
+    self.assertEquals(doc.key, item["key"])
+
   def test_save_get_delete(self):
     doc = SimpleDocument()
     doc.s = "mrrow"

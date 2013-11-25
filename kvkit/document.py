@@ -243,6 +243,17 @@ class Document(EmDocument):
     self.deserialize(value)
     return self
 
+  def serialize(self, include_key=False, **args):
+    """Serializes a document.
+
+    Args:
+      include_key: If true, the key will be available as the field "key"
+    """
+    item = EmDocument.serialize(self, **args)
+    if include_key:
+      item["key"] = self.key
+    return item
+
   def deserialize(self, data):
     EmDocument.deserialize(self, data)
     self._backend.post_deserialize(self, data)
