@@ -30,11 +30,14 @@ from ..exceptions import NotFoundError
 
 # Yay globals are terrible.
 _db = {}
+_buckets = {}
 
 def cleardb():
   """Clears the database."""
   global _db
+  global _buckets
   _db = {}
+  _buckets = {}
 
 # Yo Dawg. I heard you like tests so I wrote a test in your tests so you can
 # test while you test.
@@ -50,7 +53,7 @@ def index(cls, field, start_value, end_value=None, **args):
   # slow implementation is okay for mock.
   kvs = []
   for k, v in _db.iteritems():
-    if field in v:
+    if field in v and _buckets[k] == cls.__name__:
       if not isinstance(v[field], (list, tuple)):
         vfield = [v[field]]
       else:
@@ -68,7 +71,7 @@ def index_keys_only(cls, field, start_value, end_value=None, **args):
   return [k for k, _, _ in kvs]
 
 def list_all_keys(cls, start_value=None, end_value=None, **args):
-  keys = sorted(_db.keys())
+  keys = sorted([k for k in _db.keys() if _buckets[k] == cls.__name__])
   if start_value:
     try:
       start_i = bisect.bisect_left(keys, start_value)
@@ -89,23 +92,28 @@ def list_all_keys(cls, start_value=None, end_value=None, **args):
     return keys
 
 def list_all(cls, start_value=None, end_value=None, **args):
-  return [(k, _db[k], None) for k in list_all_keys(cls, start_value, end_value, **args)]
+  return [(k, _db[k], None) for k in list_all_keys(cls, start_value, end_value, **args) if _buckets[k] == cls.__name__]
 
 def clear_document(self):
   pass
 
 def get(cls, key, **args):
   try:
+    if _buckets[key] != cls.__name__:
+      raise NotFoundError
+
     return _db[key], None
   except KeyError:
     raise NotFoundError
 
-def save(cls, key, data, **args):
+def save(self, key, data, **args):
   _db[key] = data
+  _buckets[key] = self.__class__.__name__
 
 def delete(cls, key, **args):
   try:
     del _db[key]
+    del _buckets[key]
   except KeyError:
     pass
 

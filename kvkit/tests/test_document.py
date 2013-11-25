@@ -211,6 +211,19 @@ class BasicDocumentTest(unittest.TestCase):
     with self.assertRaises(ValidationError):
       doc.save()
 
+  def test_index_deserialized(self):
+    ref = SomeDocument().save()
+    doc = DocumentWithRef()
+    doc.ref = ref
+    doc.save()
+
+    counter = 0
+    for doc in DocumentWithRef.index("$bucket", None):
+      counter += 1
+      self.assertEquals(ref.key, doc.ref.key)
+
+    self.assertEquals(1, counter)
+
   def test_2i_iterator(self):
     doc = SomeDocument()
     doc.test_str_index = "meow"

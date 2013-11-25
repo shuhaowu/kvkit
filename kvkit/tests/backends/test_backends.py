@@ -222,6 +222,18 @@ def create_testcase(BaseDocument, SimpleDocument, DocumentWithIndexes, name, cle
     # These methods do not exist because they are tested during the course of
     # this test from initializing classes in the beginning and the documents
 
+    def test_list_all_keys_no_pollution(self):
+      doc1 = SimpleDocument().save()
+      doc2 = DocumentWithIndexes().save()
+
+      results = list(backend.list_all_keys(SimpleDocument))
+      self.assertEquals(1, len(results))
+      self.assertTrue(doc1.key in results)
+
+      results = list(backend.list_all_keys(DocumentWithIndexes))
+      self.assertEquals(1, len(results))
+      self.assertTrue(doc2.key in results)
+
     def test_list_all(self):
       doc1 = SimpleDocument(data={"number": 1}).save()
       doc2 = SimpleDocument(data={"number": 2}).save()
@@ -326,7 +338,7 @@ if riak_backend.available:
   indexed_bucket = client.bucket("test_kvkit_document_with_indexes")
   RiakBaseDocument, RiakSimpleDocument, RiakDocumentWithIndexes = create_base_documents(riak_backend,
       (None, "_riak_options", "_riak_options"),
-      (None, {"bucket": simple_bucket}, {"bucket": simple_bucket})
+      (None, {"bucket": simple_bucket}, {"bucket": indexed_bucket})
   )
 
   def riak_clear():

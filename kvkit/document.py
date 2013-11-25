@@ -200,7 +200,7 @@ class Document(EmDocument):
       kvs = cls._backend.index(cls, field, start_value, end_value, **args)
 
     for key, value, backend_obj in kvs:
-      yield cls(key=key, data=value, backend_obj=backend_obj)
+      yield cls(key=key, backend_obj=backend_obj).deserialize(value)
 
   def __init__(self, key=lambda: uuid1().hex, data={}, backend_obj=None, **args):
     """Initializes a new document.
