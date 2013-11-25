@@ -45,7 +45,7 @@ def delete(cls, key, doc=None, **args):
 
 def get(cls, key, **args):
   robj = cls._riak_options["bucket"].get(key, **args)
-  if robj.encoded_data is None:
+  if not robj.exists:
     raise NotFoundError
 
   return robj.data, robj
