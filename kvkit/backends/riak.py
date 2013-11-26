@@ -28,7 +28,6 @@ except ImportError:
   available = False
   warnings.warn("Riak not available as riak-python-client is not installed.")
 else:
-  from riak.resolver import default_resolver
   available = True
 
 from ..document import Document
@@ -87,7 +86,6 @@ def init_class(cls):
   setattr(cls, "_riak_meta", {})
 
   bucket = cls._riak_options["bucket"]
-  bucket.resolver = cls._riak_options.get("resolver", default_resolver)
 
   # I feel like I am abusing python's reflection.
   def add_link(self, obj, tag=None):
