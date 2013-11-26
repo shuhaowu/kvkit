@@ -239,6 +239,7 @@ def _figure_out_index_writes(idb, key, old, new):
   return wb
 
 def save(self, key, data, **args):
+  key = key.encode("ascii")
   index_writebatch = None
   if self._leveldb_meta.get("indexdb"):
     new_indexes = _build_indexes(self.__class__, data)

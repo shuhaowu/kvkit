@@ -301,6 +301,14 @@ def create_testcase(BaseDocument, SimpleDocument, DocumentWithIndexes, name, cle
       doc2 = SimpleDocument.get("changed-key")
       self.assertEquals(1, doc2.number)
 
+    def test_unicode_key(self):
+      doc1 = SimpleDocument(u"test-key", data={"number": 1})
+      data = doc1.serialize()
+      backend.save(doc1, u"test-key", data)
+
+      doc2 = SimpleDocument.get(u"test-key")
+      self.assertEquals(doc1.number, doc2.number)
+
   BackendSpec.__name__ = name
   return BackendSpec
 
