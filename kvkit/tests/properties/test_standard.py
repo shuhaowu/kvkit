@@ -216,4 +216,6 @@ class StandardPropertiesTest(unittest.TestCase):
 
     doc = Doc()
     self.assertTrue(prop.validate(doc))
+    self.assertTrue(prop.validate("a potential key"))
     self.assertTrue(doc.key, prop.to_db(doc))
+    self.assertTrue(doc.key, prop.to_db(doc.key))

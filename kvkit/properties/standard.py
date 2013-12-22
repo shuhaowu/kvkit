@@ -307,7 +307,7 @@ class ReferenceProperty(BaseProperty):
 
   def validate(self, value):
     return BaseProperty.validate(self, value) and \
-           (value is None or isinstance(value, self.reference_class))
+           (value is None or isinstance(value, (basestring, self.reference_class)))
 
   def to_db(self, value):
     if value is None or isinstance(value, basestring):
