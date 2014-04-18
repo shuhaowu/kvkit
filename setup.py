@@ -3,7 +3,7 @@ from distutils.core import setup
 setup(
     name="kvkit",
     version="0.1.0",
-    packages=["kvkit"],
+    packages=["kvkit", "kvkit.backends", "kvkit.properties", "kvkit.tests"],
     description="KVKit is an object mapper for key value stores (NoSQL). It supports multiple backends such as Riak and LevelDB.",
     author="Shuhao Wu",
     author_email="shuhao@shuhaowu.com",
