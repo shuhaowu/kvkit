@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Setup travis
-sudo dpkg -i travis/riak*.deb
+sudo dpkg --force-confold -i travis/riak*.deb
 sudo riak stop
 sudo cp travis/app.config /etc/riak/app.config
 sudo riak start
